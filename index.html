@@ -1,1 +1,50 @@
-<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>自販機スマホ入力</title><body><h1>自販機スマホ入力</h1><p>GitHub Pages 動作確認用</p></body></html>
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>自販機スマホ入力</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#f1f5f9;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{max-width:430px;margin:auto;padding:8px}.head{background:#020617;color:white;padding:16px;border-radius:12px;margin-bottom:8px}.small{font-size:12px;color:#94a3b8}.title{font-size:20px;font-weight:800}.step{font-size:14px;color:#cbd5e1;margin-top:4px}.card{background:#fff;border:1px solid #cbd5e1;border-radius:12px;overflow:hidden}.row{display:flex;align-items:center;gap:5px;min-height:42px;padding:4px;border-bottom:1px solid #e2e8f0}.row:last-child{border-bottom:0}.col{width:30px;font-size:12px;font-weight:800}.temp{width:25px;height:25px;border-radius:5px;color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center}.hot{background:#f97316}.cold{background:#0ea5e9}.item{min-width:0;flex:1;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.yen{width:48px;text-align:right;font-size:12px;font-weight:800}.sold{width:46px;height:32px;border:1px solid #cbd5e1;border-radius:6px;background:white;font-weight:800}.sold.on{background:#e11d48;color:white}.soldrow{background:#fff1f2}.input{width:58px;height:36px;border:1px solid #94a3b8;border-radius:6px;text-align:right;font-size:18px;font-weight:800}.btn{width:100%;border:0;border-radius:12px;padding:15px;font-weight:800;font-size:14px;margin-top:8px}.next{background:#059669;color:white}.back{background:white;border:1px solid #cbd5e1;color:#334155}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.summary{margin-top:8px;background:#020617;color:white;border-radius:12px;padding:14px}.sumrow{display:flex;justify-content:space-between;margin:5px 0}.price-row{display:grid;grid-template-columns:55px minmax(0,1fr) 75px;gap:8px;align-items:center;padding:12px;border-bottom:1px solid #e2e8f0}.price-row:last-child{border-bottom:0}.price-meta{display:flex;justify-content:space-between;gap:5px;font-size:11px;color:#64748b}.salesnum{color:#0369a1;font-weight:800}.price-input{width:100%;margin-top:5px;padding:8px;border:1px solid #94a3b8;border-radius:6px;text-align:right;font-size:20px;font-weight:800}.check{font-size:12px;text-align:right}.ok{color:#047857;font-weight:800}.bad{color:#e11d48;font-weight:800}.match{margin-top:10px;border-radius:8px;padding:9px;text-align:center;font-weight:800;background:#f59e0b}.match.good{background:#10b981}.order{text-align:right;margin-bottom:8px}.order button{padding:7px 10px;border:0;background:#334155;color:white}.order button.on{background:white;color:#0f172a;border:1px solid #334155}.done{text-align:center;background:#fff;border-radius:16px;padding:28px}.tick{font-size:50px;color:#059669}.history{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px}.status{float:right;border-radius:99px;padding:3px 8px;font-size:11px;font-weight:800}.status.ok{background:#d1fae5}.status.warn{background:#fef3c7;color:#92400e}
+</style>
+</head>
+<body><div id="app"></div>
+<script>
+const names=['ワンダ モーニングショット ブラック','三ツ矢 特濃オレンジスカッシュ 500ml','十六茶 ラベルレスボトル 500ml','カルピスウォーター 500mlペットボトル','ウィルキンソン タンサン レモン 500ml'];
+const productPrices=[130,150,160,140,180];
+const columns=Array.from({length:30},(_,i)=>({no:i+1,item:names[i%5],temp:i<12?'温':'冷',price:productPrices[i%5]}));
+const prices=[130,140,150,160,180,200];
+const previous={130:1250,140:520,150:840,160:410,180:225,200:96};
+let step='soldout',sold={},counts={},priceTotals={},order='asc';
+let history=[{date:'10/21 15:05',sales:72,price:70,diff:2,status:'要確認'},{date:'10/14 13:48',sales:91,price:91,diff:0,status:'一致'}];
+const N=v=>Number(v)||0;
+const total=()=>Object.values(counts).reduce((a,v)=>a+N(v),0);
+const salesAmount=()=>columns.reduce((s,c)=>s+N(counts[c.no])*c.price,0);
+const columnPriceCount=p=>columns.reduce((s,c)=>s+(c.price===p?N(counts[c.no]):0),0);
+const priceSale=p=>priceTotals[p]===undefined||priceTotals[p]===''?0:Math.max(0,N(priceTotals[p])-N(previous[p]));
+const priceTotal=()=>prices.reduce((s,p)=>s+priceSale(p),0);
+const diff=()=>total()-priceTotal();
+const matched=()=>diff()===0&&total()>0;
+const head=t=>`<div class="head"><div class="small">現場スマホ入力</div><div class="title">盛岡中央ビル 1号機</div><div class="step">${t}</div></div>`;
+function go(s){step=s;draw();window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0}
+function toggleSold(n){sold[n]=!sold[n];draw()}
+function setCount(n,v){counts[n]=v.replace(/\D/g,'')}
+function setPrice(p,v){priceTotals[p]=v.replace(/\D/g,'')}
+function save(){history.unshift({date:'今回',sales:total(),price:priceTotal(),diff:diff(),status:matched()?'一致':'要確認'});go('done')}
+function draw(){let h='';
+if(step==='soldout'){
+ h=head('① 売切確認')+`<div class="card">${columns.map(c=>`<div class="row ${sold[c.no]?'soldrow':''}"><b class="col">C${c.no}</b><span class="temp ${c.temp==='温'?'hot':'cold'}">${c.temp}</span><div class="item">${c.item}</div><span class="yen">${c.price}円</span><button class="sold ${sold[c.no]?'on':''}" onclick="toggleSold(${c.no})">売切</button></div>`).join('')}</div><button class="btn next" onclick="go('sales')">販売本数入力へ</button>`;
+}else if(step==='sales'){
+ h=head('② コラム別販売本数')+`<div class="card">${columns.map(c=>`<div class="row ${sold[c.no]?'soldrow':''}"><b class="col">C${c.no}</b><span class="temp ${c.temp==='温'?'hot':'cold'}">${c.temp}</span><div class="item">${c.item}${sold[c.no]?'<div style="font-size:10px;color:#e11d48">売切</div>':''}</div><span class="yen">${c.price}円</span><input class="input" inputmode="numeric" value="${counts[c.no]||''}" oninput="setCount(${c.no},this.value)"></div>`).join('')}</div><div class="summary"><div class="sumrow"><span>合計</span><b>${total()}本</b></div></div><div class="actions"><button class="btn back" onclick="go('soldout')">← 売切確認へ</button><button class="btn next" onclick="go('price')">価格別累計へ</button></div>`;
+}else if(step==='price'){
+ const ps=order==='asc'?[...prices]:[...prices].reverse();
+ h=head('③ 価格別累計本数')+`<div class="order"><button class="${order==='asc'?'on':''}" onclick="order='asc';draw()">安い順</button><button class="${order==='desc'?'on':''}" onclick="order='desc';draw()">高い順</button></div><div class="card">${ps.map(p=>{const entered=priceTotals[p]!==undefined&&priceTotals[p]!=='';const d=columnPriceCount(p)-priceSale(p);return `<div class="price-row"><b>${p}円</b><div><div class="price-meta"><span>前回 ${previous[p]||0}本</span><span class="salesnum">売上本数 ${columnPriceCount(p)}本</span></div><input class="price-input" inputmode="numeric" placeholder="累計" value="${priceTotals[p]||''}" onchange="setPrice(${p},this.value);draw()"></div><div class="check">${entered?`<div>今回 <b class="ok">${priceSale(p)}本</b></div><div class="${d===0?'ok':'bad'}">差異 ${d>0?'+':''}${d}本</div>`:''}</div></div>`}).join('')}</div><div class="summary"><div class="sumrow"><span>コラム別</span><b>${total()}本</b></div><div class="sumrow"><span>価格別</span><b>${priceTotal()}本</b></div><div class="sumrow"><span>差異</span><b>${diff()}本</b></div><div class="sumrow" style="border-top:1px solid #475569;padding-top:8px;font-size:18px"><span>売上金額</span><b>${salesAmount().toLocaleString()}円</b></div><div class="match ${matched()?'good':''}">${matched()?'本数一致 ✓':'差異あり・要確認'}</div></div><div class="actions"><button class="btn back" onclick="go('sales')">← 販売本数へ</button><button class="btn next" onclick="save()">${matched()?'確認して保存':'差異ありで保存'}</button></div>`;
+}else if(step==='done'){
+ h=head('④ 保存完了')+`<div class="done"><div class="tick">✓</div><h2>入力完了</h2><p>盛岡中央ビル 1号機</p><div class="match ${matched()?'good':''}">${matched()?'本数一致':'差異あり・要確認で保存'}</div></div><button class="btn next" onclick="go('history')">入力履歴を見る</button><button class="btn back" onclick="go('soldout')">最初から試す</button>`;
+}else{
+ h=head('入力履歴')+history.map(x=>`<div class="history"><span class="status ${x.status==='一致'?'ok':'warn'}">${x.status}</span><b>${x.date}</b><div style="clear:both;margin-top:8px;font-size:13px">コラム ${x.sales}本　価格別 ${x.price}本　差異 ${x.diff}本</div></div>`).join('')+`<button class="btn next" onclick="go('soldout')">入力へ戻る</button>`;
+}
+document.getElementById('app').innerHTML=`<div class="app">${h}</div>`;
+}
+draw();
+</script></body></html>
